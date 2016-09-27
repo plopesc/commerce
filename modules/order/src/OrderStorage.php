@@ -66,7 +66,7 @@ class OrderStorage extends CommerceContentEntityStorage {
    */
   protected function postLoad(array &$entities) {
     foreach ($entities as $entity) {
-      if ($this->orderRefresh->needsRefresh($entity)) {
+      if ($this->orderRefresh->needsRefresh($entity) && !isset($entity->no_refresh)) {
         $this->orderRefresh->refresh($entity);
       }
     }

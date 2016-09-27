@@ -26,6 +26,8 @@ class CommerceContentEntityStorage extends SqlContentEntityStorage {
    */
   protected $eventDispatcher;
 
+  protected $unchanged = [];
+
   /**
    * Constructs a new CommerceContentEntityStorage object.
    *
@@ -66,6 +68,12 @@ class CommerceContentEntityStorage extends SqlContentEntityStorage {
    * {@inheritdoc}
    */
   protected function postLoad(array &$entities) {
+    foreach ($entities as $entity) {
+      if (isset($this->unchanged[$entity->id()])) {
+        $entity->no_refresh = TRUE;
+        unset($this->unchanged[$entity->id()]);
+      }
+    }
     parent::postLoad($entities);
 
     $event_class = $this->entityType->getHandlerClass('event');
@@ -97,8 +105,8 @@ class CommerceContentEntityStorage extends SqlContentEntityStorage {
    * Gets the event name for the given hook.
    *
    * Created using the the entity type's module name and ID.
-   * For example, the 'presave' hook for commerce_order_item entities maps
-   * to the 'commerce_order.commerce_order_item.presave' event name.
+   * For example, the 'presave' hook for commerce_line_item entities maps
+   * to the 'commerce_order.commerce_line_item.presave' event name.
    *
    * @param string $hook
    *   One of 'load', 'create', 'presave', 'insert', 'update', 'predelete',
@@ -109,6 +117,15 @@ class CommerceContentEntityStorage extends SqlContentEntityStorage {
    */
   protected function getEventName($hook) {
     return $this->entityType->getProvider() . '.' . $this->entityType->id() . '.' . $hook;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function loadUnchanged($id) {
+    $this->resetCache(array($id));
+    $this->unchanged[$id] = TRUE;
+    return $this->load($id);
   }
 
 }
